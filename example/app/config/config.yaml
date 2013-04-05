@@ -1,0 +1,15 @@
+all:
+  application:
+    log:
+      common_config:
+        timeFormat: '%Y-%m-%d %H:%M:%S'
+        ident: pokefw
+      error_log:
+        name: PEAR_LOG_TYPE_SYSTEM
+        level: debug
+        
+    api:
+      default_version: 1.0.0
+    
+    apc:
+      use: false

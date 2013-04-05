@@ -1,0 +1,15 @@
+{
+    "name": "pokelabo/rest",
+    "minimum-stability": "dev",
+    "require": {
+       "apix/autoloader": "1.0.*",
+       "pokelabo/core": "dev-master",
+       "pokelabo/http": "dev-master",
+       "pokelabo/core-utility": "dev-master"
+    },
+    "autoload": {
+        "psr-0": {
+            "pokelabo": "src/"
+        }
+    }
+}
