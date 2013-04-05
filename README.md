@@ -12,7 +12,7 @@ composerからこちらを叩く事でpokelaboのRESTフレームワークがイ
         "repositories": [
             {
                 "type": "composer",
-                "url": "未定"
+                "url": "http://composer.platform-test.pokelabo.jp/"
             }
         ],
         "minimum-stability": "dev"
