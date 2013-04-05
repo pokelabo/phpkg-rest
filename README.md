@@ -4,6 +4,7 @@ phpkg-rest
 インストール
 ----------
 composerからこちらを叩く事でpokelaboのRESTフレームワークがインストールされます。
+
     {
         "require": {
             "pokelabo/rest": "dev-master"
