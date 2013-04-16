@@ -139,7 +139,7 @@ class RestfulApp {
             $version_methods = apc_fetch('version_methods');
             
             // キャッシュが存在する場合はクラス名をキーとしたデータを取得する。
-            if ($version_methods) {
+            if (isset($version_methods) && isset($version_methods[get_class($handler)])) {
                 $class_method_map = $version_methods[get_class($handler)];
             }
         }
