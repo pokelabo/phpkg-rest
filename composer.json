@@ -1,12 +1,16 @@
 {
     "name": "pokelabo/rest",
-    "minimum-stability": "dev",
     "require": {
        "apix/autoloader": "1.0.*",
-       "pokelabo/core": "dev-master",
-       "pokelabo/http": "dev-master",
-       "pokelabo/core-utility": "dev-master"
+       "pokelabo/core": "1.0.*",
+       "pokelabo/http": "1.0.*",
+       "pokelabo/core-utility": "1.0.*"
     },
+    "repositories": [
+        { "type": "git", "url": "https://github.com/pokelabo/phpkg-core.git" },
+        { "type": "git", "url": "https://github.com/pokelabo/phpkg-http.git" },
+        { "type": "git", "url": "https://github.com/pokelabo/phpkg-core-utility.git" }
+    ],
     "autoload": {
         "psr-0": {
             "pokelabo": "src/"

@@ -7,15 +7,20 @@ composerからこちらを叩く事でpokelaboのRESTフレームワークがイ
 
     {
         "require": {
-            "pokelabo/rest": "dev-master"
+           "apix/autoloader": "1.0.*",
+           "pokelabo/rest": "1.0.*"
         },
         "repositories": [
-            {
-                "type": "composer",
-                "url": "http://composer.platform-test.pokelabo.jp/"
-            }
+            { "type": "git", "url": "https://github.com/pokelabo/phpkg-rest.git" },
+            { "type": "git", "url": "https://github.com/pokelabo/phpkg-core.git" },
+            { "type": "git", "url": "https://github.com/pokelabo/phpkg-http.git" },
+            { "type": "git", "url": "https://github.com/pokelabo/phpkg-core-utility.git" }
         ],
-        "minimum-stability": "dev"
+        "autoload": {
+            "psr-0": {
+                "pokelabo": "src/"
+            }
+        }
     }
 
 
