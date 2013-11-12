@@ -32,10 +32,10 @@ class RestfulApp {
         // HTTPからのリクエストを流します。
         $this->dispatch($request, $response);
         
-        $renderer = new ResponseRenderer();
+        $renderer = $this->createResponseRenderer();
         $renderer->render($response);
     }
-    
+
     // テストコードからも実行される事があるので、runメソッドの中身を別にする。
     public function dispatch($request, $response) {
         // URLパース用にクエリーストリングを保持します。
@@ -203,6 +203,10 @@ class RestfulApp {
         return new Response();
     }
     
+    protected function createResponseRenderer() {
+        return new ResponseRenderer();
+    }
+
     /**
      * クラスの中に存在するメソッドをget,post,put,deleteでマピングして返します。
      * 
