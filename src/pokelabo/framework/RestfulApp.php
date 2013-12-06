@@ -23,15 +23,16 @@ class RestfulApp {
             $this->_log = new LoggerDummy();
         }
     }
-    
+
     public function run() {
         // リクエストとレスポンズを生成します。
         $request = $this->createRequest();
         $response = $this->createResponse();
-        
-        // HTTPからのリクエストを流します。
-        $this->dispatch($request, $response);
-        
+
+        if ($this->authenticate($request, $response)) {
+            $this->dispatch($request, $response);
+        }
+
         $renderer = $this->createResponseRenderer();
         $renderer->render($response);
     }
@@ -42,29 +43,29 @@ class RestfulApp {
         $this->_get_string = $_GET['__route__'];
         // 元のクエリーストリングは削除する。
         unset($_GET['__route__']);
-        
+
         // IDを設定します。
         $this->setRequestId($request);
-        
+
         // バージョン番号を取得します。
         $this->_version = $this->findVersion();
-        
+
         // バージョン番号が無い場合は不正とする。
         if (!isset($this->_version)) {
             return $this->endWithHttpError(404);
         }
-        
+
         // 使用するハンドラーを取得します。
         $handler = $this->findHandler($request, $response);
-        
+
         // クラスのチェック
         if (!$handler) {
             return $this->endWithHttpError(404);
         }
-        
+
         // バージョン番号に合ったメソッド名を取得する。
         $method_name = $this->getVersionMethod($handler, strtolower($_SERVER['REQUEST_METHOD']));
-        
+
         // メソッドのチェック
         if (!method_exists($handler, $method_name)){
             return $this->endWithHttpError(404);
@@ -99,11 +100,11 @@ class RestfulApp {
             $this->_log->debug('handler not found: ' . $class_name);
             return;
         }
-        
+
         $handler = new $class_name($this->_log, $request, $response);
         return $handler;
     }
-    
+
     // バージョン情報をURLから取得します。
     protected function findVersion() {
         // URLの一番始めはバージョン番号となる。
@@ -111,7 +112,7 @@ class RestfulApp {
         $this->_get_string = $url_list[1];
         return $url_list[0];
     }
-    
+
     // IDがあればIDをセットする。
     protected function setRequestId($request) {
         $last_pos = strrpos($this->_get_string, '@');
@@ -122,58 +123,58 @@ class RestfulApp {
             $this->_get_string = substr($this->_get_string, 0, $last_pos);
         }
     }
-    
+
     /**
      * 受け取ったメソッド名をバージョン番号に適したメソッドに置き換える。
      */
     protected function getVersionMethod($handler, $method) {
         // キャッシュとして使用する変数を定義
         $class_method_map = NULL;
-        
+
         // APCの中身を削除する場合
 //            apc_clear_cache('user');
-        
+
         // APCを使用する場合はAPCにデータが格納されているかをチェックします。
         if (ConfigRepository::load('config')->dig('application.apc.use')) {
             // バージョンによるメソッド振り分け用のキャッシュデータを取得する。
             $version_methods = apc_fetch('version_methods');
-            
+
             // キャッシュが存在する場合はクラス名をキーとしたデータを取得する。
             if (isset($version_methods) && isset($version_methods[get_class($handler)])) {
                 $class_method_map = $version_methods[get_class($handler)];
             }
         }
-        
+
         // 設定ファイルからデフォルトバージョンを取得します。
         $default_version = ConfigRepository::load('config')->dig('application.api.default_version');;
-        
+
         // キャッシュが存在しない場合はメソッド名を取得する。
         if (!isset($class_method_map)) {
             // クラス内部のメソッドを格納するエリアを初期化
             $class_method_map = $this->getClassMethodMap($handler, $default_version);
-            
+
             // APCへの格納を行う場合
             if (ConfigRepository::load('config')->dig('application.apc.use')) {
                 // 格納されているデータを取得します。
                 $version_methods = apc_fetch('version_methods');
-                
+
                 // 格納されているデータが無い場合は生成する。
                 if (!isset($version_methods)) {
                     $version_methods = array();
                 }
-                
+
                 // クラス名をキーにマップを作成します。
                 $version_methods[get_class($handler)] = $class_method_map;
-                
+
                 // APCに登録します。
                 apc_delete('version_methods');
                 apc_add('version_methods', $version_methods);
             }
         }
-        
+
         // 現在のメソッドを退避させる。
         $ret_method = $method;
-        
+
         // バージョンを取得します。
         $version = NULL;
         if ($this->_version == 'latest') {
@@ -183,13 +184,15 @@ class RestfulApp {
             // はじめの文字以外を取得します。
             $version = $this->versionFormat(substr($this->_version, 1));
         }
-        
+
         // バージョン名にあったメソッドが存在するかチェックします。
-        foreach ($class_method_map[$method] as $version_name => $method_name) {
-            // 指定のバージョンが対象となっている場合にバージョン別のメソッドの存在チェックを行う。
-            if (version_compare($version, $version_name, '>=')) {
-                // バージョン名をメソッドに合わせます。
-                $ret_method = $method_name;
+        if (isset($class_method_map[$method])) {
+            foreach ($class_method_map[$method] as $version_name => $method_name) {
+                // 指定のバージョンが対象となっている場合にバージョン別のメソッドの存在チェックを行う。
+                if (version_compare($version, $version_name, '>=')) {
+                    // バージョン名をメソッドに合わせます。
+                    $ret_method = $method_name;
+                }
             }
         }
         return $ret_method;
@@ -198,19 +201,19 @@ class RestfulApp {
     protected function createRequest() {
         return new Request();
     }
-    
+
     protected function createResponse() {
         return new Response();
     }
-    
+
     protected function createResponseRenderer() {
         return new ResponseRenderer();
     }
 
     /**
      * クラスの中に存在するメソッドをget,post,put,deleteでマピングして返します。
-     * 
-     * @param class $class_instance 探すクラスのインスタンス 
+     *
+     * @param class $class_instance 探すクラスのインスタンス
      * @param type $default_version デフォルトバージョン情報
      * @return array メソッドマップ
      */
@@ -247,11 +250,11 @@ class RestfulApp {
                 }
             }
         }
-        
+
         // クラスのメソッドマップを返します。
         return $class_method_map;
     }
-    
+
     // バージョン番号が不足しているものに関しては不足箇所を足し込みを行う。
     // これを行わないと、1.1 と 1.1.0での比較が正しく行われない。
     private function versionFormat($version) {
@@ -262,6 +265,22 @@ class RestfulApp {
             return $version.'.0.0';
         }
         return $version;
+    }
+
+    // 認証処理
+    // @return bool 認証OKならtrue
+    protected function authenticate($request, $response) {
+        $class_name = "\\handler\\AuthHandler";
+        if (!class_exists($class_name)) {
+            return true;
+        }
+
+        $handler = new $class_name($this->_log, $request, $response);
+        if (!is_callable(array($handler, 'authenticate'))) {
+            return true;
+        }
+
+        return $handler->authenticate();
     }
 }
 
